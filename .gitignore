@@ -1,0 +1,3 @@
+outputs/**
+*.ipynb
+*.sh
