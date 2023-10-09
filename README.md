@@ -3,7 +3,7 @@ This repository contains the code for benchmarking verbalizer baselines for text
 
 ## :bookmark_tabs: Contents
 * [:hammer: Requirments](##-Requirments)
-* [:chart_with_downwards_trend:-Training](##-Training)
+* [:chart_with_downwards_trend: Training](##-Training)
 
 
 
