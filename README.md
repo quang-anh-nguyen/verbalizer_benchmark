@@ -2,10 +2,15 @@
 This repository contains the code for benchmarking verbalizer baselines for text classification problems. 
 
 ## :bookmark_tabs: Contents
+
 **[💻 Requirments](##-Requirments)**
+
 **[🚆 Training](##-Training)**
+
 **[📋 Evaluation](##-Evaluation)**
+
 **[🛠️ Customize](##-Customize)**
+
 **[🔖 Citation](##-Citation)**
 
 
