@@ -2,7 +2,7 @@
 This repository contains the code for benchmarking verbalizer baselines for text classification problems. 
 
 ## :bookmark_tabs: Contents
-* [## :hammer: Requirments](:hammer: Requirments)
+* [:hammer: Requirments](## :hammer: Requirments)
 * [](## :chart_with_downwards_trend: Training)
 
 
