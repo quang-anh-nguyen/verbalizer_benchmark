@@ -41,9 +41,8 @@ $DATASET \\
 --batchsize_eval $BATCHSIZE_EVAL \\
 --learning_rate 1e-5 $LEARNING_RATE \\
 --epochs $EPOCHS \\
---device $DEVICE \\
+--device $DEVICE
 ```
-
 where
 * `$MODEL_TYPE` and `$MODEL_PATH` are the model name family (e.g. `roberta`) and the path of the pretrained model parsed to `transformers.ModelForMaskedLM.from_pretrained` (e.g. `roberta-large`).
 * `$DATASET` is the dataset, see `data/processor.py` for more details.
@@ -53,7 +52,7 @@ where
 * `$BATCHSIZE_TRAIN`, `$BATCHSIZE_EVAL`, `$LEARNING_RATE`, `$EPOCHS$ are training parameters.
 * `$DEVICE` is the device parsed to `torch.device`.
 
-Termination of running the above command creates a folder with random-generated name in `./outputs/$DATASET/$EXPERIMENT_NAME/` containing: 
+Termination of running the above command creates a folder with random-generated name `./outputs/$DATASET/$EXPERIMENT_NAME/XXXXXXXXXX` containing: 
 * `checkpoint/`: folder resulted from `transformers.Trainer.save_model`.
 * `info.json`: all information related to the run, including arguments, training history, predictions and metrics.
 * `logfile.log`: log file.
@@ -63,9 +62,15 @@ Termination of running the above command creates a folder with random-generated 
 To load and evaluate a pretrained model, run the following commands:
 
 ```
-python3 evaluate.py
+python3 evaluate.py \\
+$DIR 
 ```
+where
+* `$DIR` is the directory created by training command above.
+
+By default, necessary arguments will be collected from `$DIR/info.json` for evaluation.
 
 ## 🛠️ Customize
+To use your cusom template or verbalizer, create text files and parse them through `--template_file` or `--verbalizer_file` in the training command. The formatting of these files follow [template](https://thunlp.github.io/OpenPrompt/notes/template.html) and [verbalizer](https://thunlp.github.io/OpenPrompt/notes/verbalizer.html).
 
 ## 🔖 Citation
