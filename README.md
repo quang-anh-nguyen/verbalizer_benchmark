@@ -63,10 +63,12 @@ To load and evaluate a pretrained model, run the following commands:
 
 ```
 python3 evaluate.py \\
-$DIR 
+$DIR \\
+--data_path $DATA_PATH
 ```
 where
 * `$DIR` is the directory created by training command above.
+* `$DATA_PATH` is the test data path, if not identic to the test split of the training data.
 
 By default, necessary arguments will be collected from `$DIR/info.json` for evaluation.
 
