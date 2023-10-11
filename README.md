@@ -46,7 +46,7 @@ $DATASET \\
 where
 * `$MODEL_TYPE` and `$MODEL_PATH` are the model name family (e.g. `roberta`) and the path of the pretrained model parsed to `transformers.ModelForMaskedLM.from_pretrained` (e.g. `roberta-large`).
 * `$DATASET` is the dataset, see `data/processor.py` for more details.
-* `$TRAIN_SIZE` is the number of train examples, $TRAIN_TO_VALID$ is the ratio train/validation examples. `$SPLIT0` is the random state for sampling labeled examples, `$SPLIT1` is the random state for spliting train and validation.
+* `$TRAIN_SIZE` is the number of train examples, `$TRAIN_TO_VALID` is the ratio train/validation examples. `$SPLIT0` is the random state for sampling labeled examples, `$SPLIT1` is the random state for spliting train and validation.
 * `$TEMPLATE_ID` specifies the template to use, see `data/processor.py` for more details.
 * `$VERBALIZER_TYPE` specifies the bverbalizer baseline, must be one of: `manual`, `soft`, `auto`.
 * `$BATCHSIZE_TRAIN`, `$BATCHSIZE_EVAL`, `$LEARNING_RATE`, `$EPOCHS$ are training parameters.
