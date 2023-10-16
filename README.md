@@ -52,6 +52,8 @@ where
 * `$BATCHSIZE_TRAIN`, `$BATCHSIZE_EVAL`, `$LEARNING_RATE`, `$EPOCHS` are training parameters.
 * `$DEVICE` is the device parsed to `torch.device`.
 
+If `$VERBALIZER_TYPE` is `auto`, you can specify the number of label words per class via `--num_labelword`.
+
 Termination of running the above command creates a folder with random-generated name `./outputs/$DATASET/$EXPERIMENT_NAME/XXXXXXXXXX` containing: 
 * `checkpoint/`: folder resulted from `transformers.Trainer.save_model`.
 * `info.json`: all information related to the run, including arguments, training history, predictions and metrics.
