@@ -49,7 +49,7 @@ where
 * `$TRAIN_SIZE` is the number of train examples, `$TRAIN_TO_VALID` is the ratio train/validation examples. `$SPLIT0` is the random state for sampling labeled examples, `$SPLIT1` is the random state for spliting train and validation.
 * `$TEMPLATE_ID` specifies the template to use, see `data/processor.py` for more details.
 * `$VERBALIZER_TYPE` specifies the bverbalizer baseline, must be one of: `manual`, `soft`, `auto`.
-* `$BATCHSIZE_TRAIN`, `$BATCHSIZE_EVAL`, `$LEARNING_RATE`, `$EPOCHS$ are training parameters.
+* `$BATCHSIZE_TRAIN`, `$BATCHSIZE_EVAL`, `$LEARNING_RATE`, `$EPOCHS` are training parameters.
 * `$DEVICE` is the device parsed to `torch.device`.
 
 Termination of running the above command creates a folder with random-generated name `./outputs/$DATASET/$EXPERIMENT_NAME/XXXXXXXXXX` containing: 
