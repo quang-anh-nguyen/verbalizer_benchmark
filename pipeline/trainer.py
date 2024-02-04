@@ -48,7 +48,8 @@ def get_training_arguments(args):
         # "label_names": ['label'],
         "load_best_model_at_end": True,
         "metric_for_best_model": 'eval_score',
-        "optim": 'adamw_torch'
+        "optim": 'adamw_torch',
+        "save_safetensors": False,
     }
 
     if args.verbalizer_type=='soft':

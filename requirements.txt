@@ -1,0 +1,10 @@
+accelerate
+datasets==2.15.0
+pipjsonpickle
+numpy
+openprompt
+protobuf==3.20.0
+scikit-learn
+torch
+tqdm
+transformers==4.35.1

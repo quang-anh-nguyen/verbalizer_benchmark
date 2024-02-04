@@ -541,6 +541,42 @@ class FactivaProcessor(Processor):
         label = data['sector']
         guid = data['index']
         return InputExample(guid=guid, meta=data, text_a=text_a, label=label)
+
+class MLSumFrProcessor(Processor):
+    templates = [
+        'Nouvelle {"mask"}: {"placeholder": "text_a", "shortenable": True}',
+        'Actualité {"mask"}: {"placeholder": "text_a", "shortenable": True}',
+        '{"mask"}: {"placeholder": "text_a", "shortenable": True}',
+        '[Catégorie: {"mask"}] {"placeholder": "text_a", "shortenable": True}', 
+    ]
+
+    verbalizers = [
+        [
+            ['économie'], 
+            ['opinion'], 
+            ['politique'], 
+            ['société'], 
+            ['culture'], 
+            ['sport'], 
+            ['environement'], 
+            ['technologie'], 
+            ['éducation'], 
+            ['justice']
+        ],
+    ]
+
+    def __init__(self, template_id=None, verbalizer_id=None, verbalizer_file=None):
+        super().__init__(template_id, verbalizer_id, verbalizer_file)
+        self.labels = ['Economie', 'Opinion', 'Politique', 'Societe', 'Culture', 'Sport', 'Environement', 'Technologie', 'Education', 'Justice']
+        self.metrics = ['acc', 'f1a']
+        self.inputs = ['title', 'summary', 'text']
+        self.output = 'label'
+        
+    def get_example(self, data):
+        text_a = data['title'] + ' ' + data['summary'] + ' ' + data['text']
+        label = data['label']
+        idx = data['index']
+        return InputExample(guid=idx, meta=data, text_a=text_a, label=label)
     
 PROCESSORS = {
     'ag_news': AGNewsProcessor,
@@ -558,6 +594,7 @@ PROCESSORS = {
     'qqp': QQPProcessor,
     'cola': COLAProcessor,
     'factiva': FactivaProcessor,
+    'mlsum.fr': MLSumFrProcessor,
 }
 
 def get_processor(name):

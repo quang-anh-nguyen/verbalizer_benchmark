@@ -1,8 +1,9 @@
 import os
 import numpy as np
+import pandas as pd
 
 from sklearn.metrics import accuracy_score, f1_score, matthews_corrcoef
-from datasets import load_dataset, DatasetDict
+from datasets import load_dataset, DatasetDict, ClassLabel
 
 from data.processor import get_processor, has_multiple_verbalizers
 
@@ -51,14 +52,21 @@ def get_dataset_processor(
         version = dataset_name.split('.')[-1]
         path = os.path.join('factiva', 'storage', version)
         from_benchmark = False
-        # print(version)
-        # print('val' in version)
-        # print('val' in 'val_10s')
         if ('val' in version) or ('test' in version):
             original_dataset = load_dataset('json', data_files={'test': path+'/test.json'}, field='data')
         else:
             original_dataset = load_dataset('json', data_files={'train': path+'/train.json', 'test': path+'/test.json'}, field='data')
         original_dataset = original_dataset.class_encode_column('sector')
+    elif dataset_name=='mlsum.fr':
+        from_benchmark = False
+        original_dataset = load_dataset('mlsum', 'fr')
+        
+        for split in original_dataset:
+            i = pd.read_parquet(f"mlsum_fr/{split}")
+            original_dataset[split] = original_dataset[split].select(i['index'].tolist())
+            original_dataset[split] = original_dataset[split].add_column('label', i['label'].tolist())
+            
+        original_dataset = original_dataset.cast_column('label', ClassLabel(names=['Economie', 'Opinion', 'Politique', 'Societe', 'Culture', 'Sport', 'Environement', 'Technologie', 'Education', 'Justice']))
     else:
         raise Exception("Dataset processor not implemented yet")
 
