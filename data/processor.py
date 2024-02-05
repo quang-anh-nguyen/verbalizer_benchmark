@@ -575,8 +575,8 @@ class MLSumFrProcessor(Processor):
     def get_example(self, data):
         text_a = data['title'] + ' ' + data['summary'] + ' ' + data['text']
         label = data['label']
-        idx = data['index']
-        return InputExample(guid=idx, meta=data, text_a=text_a, label=label)
+        # idx = data['index']
+        return InputExample(meta=data, text_a=text_a, label=label)
     
 PROCESSORS = {
     'ag_news': AGNewsProcessor,

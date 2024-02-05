@@ -62,7 +62,7 @@ def get_dataset_processor(
         original_dataset = load_dataset('mlsum', 'fr')
         
         for split in original_dataset:
-            i = pd.read_parquet(f"mlsum_fr/{split}")
+            i = pd.read_parquet(f"data/mlsum_fr/{split}")
             original_dataset[split] = original_dataset[split].select(i['index'].tolist())
             original_dataset[split] = original_dataset[split].add_column('label', i['label'].tolist())
             
@@ -90,6 +90,7 @@ def get_dataset_processor(
     if do_stratify and stratify_column is None:
         stratify_column = processor.output
 
+
     if len(original_dataset['train'])==int(train_size*(1+train_to_valid)):        
         label_data = original_dataset['train'].train_test_split(
             train_size=(train_to_valid)/(train_to_valid+1),
@@ -97,16 +98,36 @@ def get_dataset_processor(
             seed=seed1
         )
     else:
+
         label_data = original_dataset['train'].train_test_split(
-            train_size=int(train_size*(1+train_to_valid)), 
+            train_size=int(train_size*(1+1/train_to_valid)), 
             stratify_by_column=stratify_column,
             seed=seed0)
-    
-        label_data = label_data['train'].train_test_split(
-            train_size=(train_to_valid)/(train_to_valid+1),
-            stratify_by_column=stratify_column,
-            seed=seed1
-        )
+        
+        if do_stratify:
+            _, counts = np.unique(label_data['train'][stratify_column], return_counts=True)
+            if np.min(counts)==1:
+                label_data = label_data['train'].train_test_split(
+                    train_size=train_size,
+                    seed=seed1
+                )
+                _, train_counts = np.unique(label_data['train'][stratify_column], return_counts=True)
+                if np.min(train_counts)==0:
+                    label_data = {
+                        'train': label_data['test'],
+                        'test': label_data['train']
+                    }
+            else:
+                label_data = label_data['train'].train_test_split(
+                    train_size=train_size,
+                    seed=seed1,
+                    stratify_by_column=stratify_column
+                )
+        else:
+            label_data = label_data['train'].train_test_split(
+                train_size=train_size,
+                seed=seed1
+            )
     
     datasets = DatasetDict({
         'train': label_data['train'],

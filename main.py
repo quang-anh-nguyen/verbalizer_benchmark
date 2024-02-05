@@ -100,10 +100,6 @@ logger = get_logger(__name__, filename=os.path.join(OUTPUT_DIR, 'logfile.log'))
 # get_logger('datasets', filename=os.path.join(OUTPUT_DIR, 'logfile.log'))
 # get_logger('transformers', filename=os.path.join(OUTPUT_DIR, 'logfile.log'))
 
-# for n in (logging.Logger.manager.loggerDict):
-#     print(n)
-# raise Exception()
-
 logger.info(json.dumps(args.__dict__, indent=4))
 
 logger.info(f'EXPERIMENT ID = {ID}')
@@ -275,11 +271,16 @@ with open(os.path.join(OUTPUT_DIR, 'info.json'), 'w+') as f:
 logger.info(f'Result saved to {OUTPUT_DIR}')
 
 with open(os.path.join(OUTPUT_DIR, 'verbalizer.json'), 'w+') as f:
-    json.dump({
-        'ids': verbalizer.label_words_ids.detach().cpu().tolist(),
-        'mask': verbalizer.words_ids_mask.detach().cpu().tolist(),
-        'weight': verbalizer.label_words_weight.detach().cpu().tolist()
-    }, f, indent=4)
+    if args.verbalizer_type=='aug':
+        json.dump({
+            'ids': verbalizer.label_words_ids.detach().cpu().tolist(),
+            'mask': verbalizer.words_ids_mask.detach().cpu().tolist(),
+            'weight': verbalizer.label_words_weight.detach().cpu().tolist()
+        }, f, indent=4)
+    if args.verbalizer_type=='auto':
+        json.dump({
+            'ids': verbalizer.label_words_ids.detach().cpu().tolist(),
+        }, f, indent=4)
 logger.info(f"Verbalizer saved")
 
 

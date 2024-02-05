@@ -204,12 +204,6 @@ class SoftVerbalizerTrainer(BaseTrainer):
         optimizer_cls, optimizer_kwargs = Trainer.get_optimizer_cls_and_kwargs(self.args)
         self.optimizer = optimizer_cls(params_groups, **optimizer_kwargs)
 
-        logger.info(self.optimizer)
-        logger.info(self.optimizer.param_groups)
-        for p, g in self.optimizer.param_groups:
-            logger.info(p)
-            logger.info(self.optimizer.param_groups[p])
-
         return self.optimizer
 
 class AutomaticVerbalizerCallback(TrainerCallback):
