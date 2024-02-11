@@ -3,6 +3,7 @@ import inspect
 import torch
 import numpy as np
 import json
+import gensim.downloader as api
 
 from typing import Optional, Sequence, Union
 from transformers.tokenization_utils import PreTrainedTokenizer
@@ -92,6 +93,7 @@ class AugmentedVerbalizer(ManualVerbalizer):
         prefix=' ',
         augmented_num=0,
         embeddings=None,
+        embedding_path=None,
     ):
     
         super().__init__(
@@ -104,7 +106,12 @@ class AugmentedVerbalizer(ManualVerbalizer):
         )
         
         self.augmented_num = augmented_num
-        self.embeddings = embeddings
+        if embedding_path is None:
+            self.embeddings = embeddings
+            self.use_lm_embedding = True
+        else:
+            self.embeddings = api.load(embedding_path)
+            self.use_lm_embedding = False
         self.label_words = label_words
         
     def generate_parameters(self):
@@ -118,20 +125,33 @@ class AugmentedVerbalizer(ManualVerbalizer):
             weights_per_label = [1.0] * len(words_per_label)
             for word in words_per_label:
                 ids = self.tokenizer.encode(word, add_special_tokens=False)
-                ids_per_label.append(ids)            
-                
-                base_embedding = self.embeddings(torch.tensor(ids)).mean(0)
-                candidate_embeddings = self.embeddings(torch.tensor([i for i in range(self.tokenizer.vocab_size)]))
-                similarities = F.cosine_similarity(base_embedding[None, :], candidate_embeddings, dim=-1)
-                values, idx = torch.topk(similarities, self.augmented_num+1)
-                
-                values = values[1:]
-                idx = idx[1:]
-                
-                logger.info(f"{word} {ids} choose {self.tokenizer.convert_ids_to_tokens(idx)}")
+                ids_per_label.append(ids)
 
-                ids_per_label += [[i] for i in idx]
-                weights_per_label += values
+                if self.use_lm_embedding:            
+                    base_embedding = self.embeddings(torch.tensor(ids)).mean(0)
+                    candidate_embeddings = self.embeddings(torch.tensor([i for i in range(self.tokenizer.vocab_size)]))
+                    similarities = F.cosine_similarity(base_embedding[None, :], candidate_embeddings, dim=-1)
+                    values, idx = torch.topk(similarities, self.augmented_num+1)
+                  
+                    values = values[1:]
+                    idx = idx[1:]
+
+                    ids_per_label += [[i] for i in idx]
+                    weights_per_label += values
+
+                    logger.info(f"{word} {ids} choose {self.tokenizer.convert_ids_to_tokens(idx)}")
+                
+                else:
+                    candidates = self.embeddings.most_similar(word.strip('\u0120').strip())
+                    neighbors = [x[0] for x in candidates] 
+                    similarities = [x[1] for x in candidates]
+
+                    idx = [self.tokenizer.encode(self.add_prefix(w.replace('_', ' '), self.prefix), add_special_tokens=False) for w in neighbors]
+                    ids_per_label += idx
+                    weights_per_label += similarities
+
+                    logger.info(f"{word} {ids} choose {neighbors}")
+                
             
             all_ids.append(ids_per_label)
             all_weights.append(weights_per_label)

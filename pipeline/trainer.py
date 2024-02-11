@@ -76,7 +76,7 @@ def get_evaluating_arguments(args):
         # "label_names": ['label'],
     }
     
-    return CustomTrainingArguments(**kwargs)
+    return CustomTrainingArguments(**{k:v for k,v in kwargs.items() if v is not None})
 
 @dataclass
 class CustomTrainingArguments(TrainingArguments):

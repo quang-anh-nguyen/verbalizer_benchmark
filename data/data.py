@@ -83,7 +83,7 @@ def get_dataset_processor(
         )
 
     if train_size<=0:
-        do_split = False
+        return DatasetDict({'test': original_dataset['validation' if from_benchmark else 'test']}), processor
     if not do_split:
         return original_dataset, processor
     
@@ -111,7 +111,7 @@ def get_dataset_processor(
     datasets = DatasetDict({
         'train': label_data['train'],
         'valid': label_data['test'],
-        'test': original_dataset['valid' if from_benchmark else 'test']
+        'test': original_dataset['validation' if from_benchmark else 'test']
     })
     
     return datasets, processor

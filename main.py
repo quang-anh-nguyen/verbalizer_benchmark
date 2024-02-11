@@ -167,53 +167,40 @@ template = get_template(
     text=processor.template
 )
 
-if False:
-    with open('ground.json', 'r') as f:
-        ground=json.load(f)
-    verbalizer = get_verbalizer(
-        'stat',
-        tokenizer=tokenizer,
-        model=plm,
-        classes=processor.labels,
-        num_classes=len(processor.labels),
-        ground=ground,
-        loss_fn=args.stat_distance,
-    )
-else:
-    if args.ground_vocab is not None:
-        if args.ground_vocab=='tiny':
-            ground = [w for v in processor.verbalizers for l in v for w in l]
-            ground_construction = None
-        elif 'json' in args.ground_vocab:
-            with open(args.ground_vocab, 'r') as f:
-                ground = json.load(f)
-            ground_construction = None
-        else:
-            ground = None
+if args.ground_vocab is not None:
+    if args.ground_vocab=='tiny':
+        ground = [w for v in processor.verbalizers for l in v for w in l]
+        ground_construction = None
+    elif 'json' in args.ground_vocab:
+        with open(args.ground_vocab, 'r') as f:
+            ground = json.load(f)
+        ground_construction = None
     else:
         ground = None
-        ground_construction = None
+else:
+    ground = None
+    ground_construction = None
 
-    verbalizer = get_verbalizer(
-        args.verbalizer_type, 
-        tokenizer=tokenizer, 
-        model=plm, 
-        label_words=processor.labelwords,
-        classes=processor.labels,
-        num_classes=len(processor.labels),
-        label_word_num_per_class=args.num_labelword,
-        augmented_num=args.num_labelword,
-        ground=ground,
-        ground_construction=ground_construction,
-        loss_fn=args.stat_distance,
-        temperature=args.temperature,
-        log_alpha=bool(args.log_alpha),
-        init_prototypes=args.init_prototypes,
-        calibrate=args.calibrate,
-        embedding_path=args.embedding_path,
-        ground_dim=args.ground_dim,
-        embeddings=plm.get_input_embeddings()
-    )
+verbalizer = get_verbalizer(
+    args.verbalizer_type, 
+    tokenizer=tokenizer, 
+    model=plm, 
+    label_words=processor.labelwords,
+    classes=processor.labels,
+    num_classes=len(processor.labels),
+    label_word_num_per_class=args.num_labelword,
+    augmented_num=args.num_labelword,
+    ground=ground,
+    ground_construction=ground_construction,
+    loss_fn=args.stat_distance,
+    temperature=args.temperature,
+    log_alpha=bool(args.log_alpha),
+    init_prototypes=args.init_prototypes,
+    calibrate=args.calibrate,
+    embedding_path=args.embedding_path,
+    ground_dim=args.ground_dim,
+    embeddings=plm.get_input_embeddings()
+)
 
 prompt_model = PromptModelForClassification(plm, template, verbalizer, freeze_plm=args.freeze_lm)
 
