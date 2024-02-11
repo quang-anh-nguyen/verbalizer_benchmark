@@ -142,11 +142,17 @@ class AugmentedVerbalizer(ManualVerbalizer):
                     logger.info(f"{word} {ids} choose {self.tokenizer.convert_ids_to_tokens(idx)}")
                 
                 else:
-                    candidates = self.embeddings.most_similar(word.strip('\u0120').strip())
+                    candidates = self.embeddings.most_similar(word.strip('\u0120').strip(), topn=self.augmented_num+10)
                     neighbors = [x[0] for x in candidates] 
                     similarities = [x[1] for x in candidates]
 
-                    idx = [self.tokenizer.encode(self.add_prefix(w.replace('_', ' '), self.prefix), add_special_tokens=False) for w in neighbors]
+                    logger.info(word)
+                    logger.info(neighbors)
+                    logger.info(similarities)
+                    logger.info(self.add_prefix(neighbors, self.prefix))
+                    logger.info(self.tokenizer.encode(self.add_prefix(neighbors, self.prefix)[0], add_special_tokens=False))
+
+                    idx = [self.tokenizer.encode(w[0].replace('_', ' '), add_special_tokens=False) for w in self.add_prefix(neighbors, self.prefix)]
                     ids_per_label += idx
                     weights_per_label += similarities
 
@@ -181,10 +187,10 @@ class AugmentedVerbalizer(ManualVerbalizer):
         self.label_words_mask = nn.Parameter(torch.clamp(words_ids_mask.sum(dim=-1), max=1), requires_grad=False)
         self.label_words_weight = nn.Parameter(weights, requires_grad=True)
         
-        logger.info(self.label_words_ids.shape)
+        logger.info(self.label_words_ids)
         logger.info(self.words_ids_mask.shape)
-        logger.info(self.label_words_mask.shape)
-        logger.info(self.label_words_weight.shape)
+        logger.info(self.label_words_mask)
+        logger.info(self.label_words_weight)
         logger.info(weights)
         
     def project(self,
