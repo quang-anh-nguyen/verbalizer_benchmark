@@ -1,2 +1,0 @@
-def abc():
-    print('abc')
