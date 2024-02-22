@@ -17,7 +17,7 @@ This repository contains the code for benchmarking verbalizer baselines for text
 
 
 ## 💻 Requirements
-All requirements can be found in ```requirements.txt```. You can install required packages with ```pip install -r requirements.txt```. You also need to install the repo `https://github.com/anucvml/ddn``.
+All requirements can be found in ```requirements.txt```. You can install required packages with ```pip install -r requirements.txt```. You also need to install the repo https://github.com/anucvml/ddn.
 
 ## 🚆 Training
 To train a model in few-learning with verbalizers, simply run the following commands:
