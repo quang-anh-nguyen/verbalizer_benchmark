@@ -31,7 +31,6 @@ $DATASET \\
 --seed $SEED \\
 --do_train \\
 --do_test \\
---do_zeroshot \\
 --train_size $TRAIN_SIZE \\
 --train_to_valid $TRAIN_TO_VALID \\
 --split $SPLIT_0 $SPLIT_1 \\
@@ -48,11 +47,12 @@ where
 * `$DATASET` is the dataset, see `data/processor.py` for more details.
 * `$TRAIN_SIZE` is the number of train examples, `$TRAIN_TO_VALID` is the ratio train/validation examples. `$SPLIT0` is the random state for sampling labeled examples, `$SPLIT1` is the random state for spliting train and validation.
 * `$TEMPLATE_ID` specifies the template to use, see `data/processor.py` for more details.
-* `$VERBALIZER_TYPE` specifies the bverbalizer baseline, must be one of: `manual`, `soft`, `auto`.
+* `$VERBALIZER_TYPE` specifies the bverbalizer baseline, must be one of: `manual`, `soft`, `auto`, or `aug`.
 * `$BATCHSIZE_TRAIN`, `$BATCHSIZE_EVAL`, `$LEARNING_RATE`, `$EPOCHS` are training parameters.
 * `$DEVICE` is the device parsed to `torch.device`.
 
-If `$VERBALIZER_TYPE` is `auto`, you can specify the number of label words per class via `--num_labelword`.
+If `$VERBALIZER_TYPE` is `auto` or `aug`, you can specify the number of label words per class or the number of neighborhoods via `--num_labelword`.
+If `$VERBALIZER_TYPE` is `aug`, you can specify the embedding if not directly the embedding layer of LM, via `--embedding_path`. Current version supports embeddings from `gensim.downloader.info()['models'].keys()`.
 
 Termination of running the above command creates a folder with random-generated name `./outputs/$DATASET/$EXPERIMENT_NAME/XXXXXXXXXX` containing: 
 * `checkpoint/`: folder resulted from `transformers.Trainer.save_model`.
