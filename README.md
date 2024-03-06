@@ -1,5 +1,5 @@
 # Verbalizer benchmarking for text classification
-This repository contains the code for benchmarking verbalizer baselines for text classification problems. 
+This repository contains the code for benchmarking verbalizer baselines for text classification problems, published at LREC-COLING 2024, the Joint International Conference on Computational Linguistics, Language Resources and Evaluation. 20-25 MAY, 2024 / TORINO, ITALIA.
 
 ## :bookmark_tabs: Contents
 
@@ -78,3 +78,15 @@ By default, necessary arguments will be collected from `$DIR/info.json` for eval
 To use your cusom template or verbalizer, create text files and parse them through `--template_file` or `--verbalizer_file` in the training command. The formatting of these files follow [template](https://thunlp.github.io/OpenPrompt/notes/template.html) and [verbalizer](https://thunlp.github.io/OpenPrompt/notes/verbalizer.html).
 
 ## 🔖 Citation
+
+```
+@inproceedings{nguyen2024enhancing,
+  title={Enhancing Few-Shot Topic Classification with Verbalizers. A Study on Automatic Verbalizer and Ensemble Methods},
+  author={Nguyen, Quang Anh and Tomeh, Nadi and Lebbah, Mustapha and Charnois, Thierry and Azzag, Hanane and Munoz, Santiago Cordoba},
+  booktitle={LREC-COLING 2024. Joint International Conference on Computational Linguistics, Language Resources and Evaluation},
+  year={2024},
+  month={5},
+  day={20-25},
+  address={Torino, Italia},
+}
+```
