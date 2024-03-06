@@ -1,5 +1,4 @@
-# Verbalizer benchmarking for text classification
-This repository contains the code for benchmarking verbalizer baselines for text classification problems. 
+# Manual Verbalizer Enrichment by Nearest Neighbors' Embeddings
 
 ## :bookmark_tabs: Contents
 
