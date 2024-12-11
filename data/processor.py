@@ -36,7 +36,8 @@ class AGNewsProcessor(Processor):
     ]
 
     verbalizers = [
-        [['world', 'politics'], ['sports'], ['business'], ['science', 'technology']]
+        [['world', 'politics'], ['sports'], ['business'], ['science', 'technology']],
+        []
     ]
 
     def __init__(self, template_id=None, verbalizer_id=None, verbalizer_file=None):
@@ -541,7 +542,147 @@ class FactivaProcessor(Processor):
         label = data['sector']
         guid = data['index']
         return InputExample(guid=guid, meta=data, text_a=text_a, label=label)
+    
+class MLSumDeProcessor(Processor):
+    templates = [
+        '{"mask"} Nachrichten: {"placeholder": "text_a", "shortenable": True}',
+        '{"placeholder": "text_a", "shortenable": True} Diese Nachricht handelt von {"mask"}',
+        '[Kategorie: {"mask"}] {"placeholder": "text_a", "shortenable": True}',
+        '[Thema: {"mask"}] {"placeholder": "text_a", "shortenable": True}'
+    ]
 
+    verbalizers = [
+        [
+            'Auto',
+            'Bildung',
+            'Digital',
+            'Geld',
+            'Karriere',
+            'Muenchen',
+            'Panorama',
+            'Politik',
+            'Reise',
+            'Sport',
+            'Stil',
+            'Wirtschaft'
+        ]
+    ]
+
+    def __init__(self, template_id=None, verbalizer_id=None, verbalizer_file=None):
+        super().__init__(template_id, verbalizer_id, verbalizer_file)
+        self.labels = [
+            'auto',
+            'bildung',
+            'digital',
+            'geld',
+            'karriere',
+            'muenchen',
+            'panorama',
+            'politik',
+            'reise',
+            'sport',
+            'stil',
+            'wirtschaft'
+        ]
+        self.metrics = ['acc', 'f1a']
+        self.inputs = ['title', 'summary', 'text']
+        self.output = 'topic'
+        
+    def get_example(self, data):
+        text_a = data['title'] + ' ' + data['summary'] + ' ' + data['text']
+        label = data['topic']
+        return InputExample(meta=data, text_a=text_a, label=label)
+    
+class MLSumEsProcessor(Processor):
+    templates = [
+        '{"mask"} noticias: {"placeholder": "text_a", "shortenable": True}',
+        '{"placeholder": "text_a", "shortenable": True} Esta noticia trata sobre {"mask"}',
+        '[Categoría: {"mask"}] {"placeholder": "text_a", "shortenable": True}',
+        '[Tema: {"mask"}] {"placeholder": "text_a", "shortenable": True}'
+    ]
+
+    verbalizers = [
+        [
+            'cultura',
+            'deportes',
+            'economia',
+            'internacional',
+            'politica',
+            'sociedad',
+            'tecnologia'
+        ]
+    ]
+
+    def __init__(self, template_id=None, verbalizer_id=None, verbalizer_file=None):
+        super().__init__(template_id, verbalizer_id, verbalizer_file)
+        self.labels = [
+            'cultura',
+            'deportes',
+            'economia',
+            'internacional',
+            'politica',
+            'sociedad',
+            'tecnologia'
+        ]
+        self.metrics = ['acc', 'f1a']
+        self.inputs = ['title', 'summary', 'text']
+        self.output = 'topic'
+        
+    def get_example(self, data):
+        text_a = data['title'] + ' ' + data['summary'] + ' ' + data['text']
+        label = data['topic']
+        return InputExample(meta=data, text_a=text_a, label=label)
+    
+
+class MLSumRuProcessor(Processor):
+    templates = [
+        '{"mask"} новости: {"placeholder": "text_a", "shortenable": True}',
+        '{"placeholder": "text_a", "shortenable": True} Эти новости о {"mask"}',
+        '[Категория: {"mask"}] {"placeholder": "text_a", "shortenable": True}',
+        '[Тема: {"mask"}] {"placeholder": "text_a", "shortenable": True}'
+    ]
+
+    verbalizers = [
+        [   
+            'культура',
+            'экономика',
+            'инцидент',
+            'москва',
+            'мособл',
+            'политика',
+            'наука',
+            'социальный',
+            'спецпроекты',
+            'спорт'
+        ]
+    ]
+
+    def __init__(self, template_id=None, verbalizer_id=None, verbalizer_file=None):
+        super().__init__(template_id, verbalizer_id, verbalizer_file)
+        self.labels = [   
+            'культура',
+            'экономика',
+            'инцидент',
+            'москва',
+            'мособл',
+            'политика',
+            'наука',
+            'социальный',
+            'спецпроекты',
+            'спорт'
+        ]
+        self.metrics = ['acc', 'f1a']
+        self.inputs = ['title', 'summary', 'text']
+        self.output = 'topic'
+        
+    def get_example(self, data):
+        text_a = data['title'] + ' ' + data['summary'] + ' ' + data['text']
+        label = data['topic']
+        return InputExample(meta=data, text_a=text_a, label=label)
+
+class MLSumTuProcessor(Processor):
+    pass
+    
 class MLSumFrProcessor(Processor):
     templates = [
         'Nouvelle {"mask"}: {"placeholder": "text_a", "shortenable": True}',
@@ -558,7 +699,7 @@ class MLSumFrProcessor(Processor):
             ['société'], 
             ['culture'], 
             ['sport'], 
-            ['environement'], 
+            ['environnement'], 
             ['technologie'], 
             ['éducation'], 
             ['justice']
@@ -594,7 +735,11 @@ PROCESSORS = {
     'qqp': QQPProcessor,
     'cola': COLAProcessor,
     'factiva': FactivaProcessor,
+    'mlsum.de': MLSumDeProcessor,
+    'mlsum.es': MLSumEsProcessor,
     'mlsum.fr': MLSumFrProcessor,
+    'mlsum.ru': MLSumRuProcessor,
+    'mlsum.tu': MLSumTuProcessor,
 }
 
 def get_processor(name):

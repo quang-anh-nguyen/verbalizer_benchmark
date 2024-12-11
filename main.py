@@ -43,11 +43,12 @@ parser.add_argument('--template_type', choices=['manual', 'prefix', 'ptuning', '
 parser.add_argument('--template_id', type=int)
 parser.add_argument('--template_file', type=str)
 
-parser.add_argument('--verbalizer_type', type=str, choices=['manual', 'soft', 'auto', 'stat', 'ot', 'aug'], default='manual')
+parser.add_argument('--verbalizer_type', type=str, choices=['manual', 'soft', 'auto', 'stat', 'ot', 'aug', 'augauto'], default='manual')
 parser.add_argument('--verbalizer_id', type=int)
 parser.add_argument('--verbalizer_file', type=str)
 
 parser.add_argument('--num_labelword', type=int)
+parser.add_argument('--augmented_num', type=int)
 
 parser.add_argument('--ground_vocab', type=str)
 parser.add_argument('--embedding_path', type=str)
@@ -97,12 +98,13 @@ if not os.path.isdir(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
 logger = get_logger(__name__, filename=os.path.join(OUTPUT_DIR, 'logfile.log'))
-# get_logger('datasets', filename=os.path.join(OUTPUT_DIR, 'logfile.log'))
-# get_logger('transformers', filename=os.path.join(OUTPUT_DIR, 'logfile.log'))
+get_logger('datasets', filename=os.path.join(OUTPUT_DIR, 'logfile.log'))
+get_logger('transformers', filename=os.path.join(OUTPUT_DIR, 'logfile.log'))
 
 logger.info(json.dumps(args.__dict__, indent=4))
 
 logger.info(f'EXPERIMENT ID = {ID}')
+print(f'EXPERIMENT ID = {ID}')
 logger.info(f'Results saving at {OUTPUT_DIR}')
 logger.debug(logging.Logger.manager.loggerDict)
 
@@ -141,6 +143,8 @@ datasets, processor = get_dataset_processor(
     do_stratify=True,
 )
 
+logger.info('Processor')
+logger.info(processor)
 logger.info('processor.template'+'='*100)
 logger.info(processor.template)
 
@@ -185,7 +189,7 @@ verbalizer = get_verbalizer(
     classes=processor.labels,
     num_classes=len(processor.labels),
     label_word_num_per_class=args.num_labelword,
-    augmented_num=args.num_labelword,
+    augmented_num=args.augmented_num if args.verbalizer_type=='augauto' else args.num_labelword,
     ground=ground,
     ground_construction=ground_construction,
     loss_fn=args.stat_distance,
@@ -197,6 +201,18 @@ verbalizer = get_verbalizer(
     ground_dim=args.ground_dim,
     embeddings=plm.get_input_embeddings()
 )
+
+logger.info("="*100)
+logger.info(type(verbalizer))
+try:
+    logger.info(verbalizer)
+except:
+    pass
+logger.info('verbalizer')
+# logger.info(processor.labelwords)
+# logger.info(verbalizer.label_words)
+# logger.info(verbalizer.label_words_ids)
+logger.info("="*100)
 
 prompt_model = PromptModelForClassification(plm, template, verbalizer, freeze_plm=args.freeze_lm)
 
@@ -253,8 +269,7 @@ if args.do_test:
     results['test']['best'] = postprocess_prediction(raw, processor.metrics)
     logger.info(json.dumps(results['test']['best']['metrics'], indent=4))
 
-if args.verbalizer_type=='auto':
-    pass
+if (args.verbalizer_type=='auto') or (args.verbalizer_type=='augauto'):
     tokens = {processor.labels[i]: tokenizer.convert_ids_to_tokens(w, skip_special_tokens=True) for i, w in enumerate(verbalizer.label_words_ids)}
     # tokens = {c: [w[1:] if w[0]=='Ġ' else w for w in tokens[c]] for c in tokens}
     with open(os.path.join(OUTPUT_DIR, 'verbalizer.json'), 'w+', encoding='utf8') as f:
@@ -281,6 +296,14 @@ with open(os.path.join(OUTPUT_DIR, 'verbalizer.json'), 'w+') as f:
         json.dump({
             'ids': verbalizer.label_words_ids.detach().cpu().tolist(),
         }, f, indent=4)
+    if args.verbalizer_type=='augauto':
+        json.dump({
+            'label_words': verbalizer.label_words,
+            'ids': verbalizer.label_words_ids.detach().cpu().tolist(),
+            'mask': verbalizer.words_ids_mask.detach().cpu().tolist(),
+            'weight': verbalizer.label_words_weight.detach().cpu().tolist()
+        }, f, indent=4)
+
 logger.info(f"Verbalizer saved")
 
 

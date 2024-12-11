@@ -30,6 +30,12 @@ def prepare_plm(model_type, model_path):
             tokenizer = CamembertTokenizer.from_pretrained(model_path)
             config = CamembertConfig.from_pretrained(model_path)
             wrapper_plm = MLMTokenizerWrapper
+        elif model_type in ['gottbert', 'roberta-bne', 'ruberta']:
+            from transformers import RobertaConfig, RobertaTokenizer, RobertaForMaskedLM
+            plm = RobertaForMaskedLM.from_pretrained(model_path)
+            tokenizer = RobertaTokenizer.from_pretrained(model_path)
+            config = RobertaConfig.from_pretrained(model_path)
+            wrapper_plm = MLMTokenizerWrapper
     return plm, tokenizer, config, wrapper_plm
 
 class PromptModelForClassification(PromptForClassification):

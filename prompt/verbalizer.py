@@ -18,6 +18,33 @@ from tqdm import tqdm
 
 class CustomAutomaticVerbalizer(AutomaticVerbalizer):
 
+    def __init__(
+        self,
+        tokenizer=None,
+        num_candidates=1000,
+        label_word_num_per_class=1,
+        num_searches=1,
+        score_fct='llr',
+        balance=True,
+        num_classes=None,
+        classes=None,
+        init_using_split="train",
+        **kwargs
+    ):
+        
+        super().__init__(
+            tokenizer=tokenizer,
+            num_candidates=num_candidates,
+            label_word_num_per_class=label_word_num_per_class,
+            num_searches=num_searches,
+            score_fct=score_fct,
+            balance=balance,
+            num_classes=num_classes,
+            classes=classes,
+            init_using_split=init_using_split,
+            **kwargs
+        )
+
     def register_buffer(self, logits, labels):
         r'''
 
@@ -34,6 +61,13 @@ class CustomAutomaticVerbalizer(AutomaticVerbalizer):
         else:
             self.probs_buffer = torch.vstack([self.probs_buffer, logits])
             self.labels_buffer = torch.hstack([self.labels_buffer, labels])
+
+    def optimize_to_initialize(self):
+        super().optimize_to_initialize()
+
+        self.label_words = [
+            self.tokenizer.convert_ids_to_tokens(lws) for lws in self.label_words_ids
+        ]
 
 
             
@@ -112,6 +146,7 @@ class AugmentedVerbalizer(ManualVerbalizer):
         else:
             self.embeddings = api.load(embedding_path)
             self.use_lm_embedding = False
+
         self.label_words = label_words
         
     def generate_parameters(self):
@@ -208,6 +243,145 @@ class AugmentedVerbalizer(ManualVerbalizer):
         label_words_logits = (label_words_logits * self.label_words_mask * self.label_words_weight).sum(-1)/(self.label_words_weight*self.label_words_mask).sum(-1)
         return label_words_logits
     
+
+class AugmentedAutomaticVerbalizer(CustomAutomaticVerbalizer):
+
+    def __init__(
+        self, 
+        tokenizer=None,
+        classes=None,
+        num_classes=None,
+        label_words=None,
+        post_log_softmax=True,
+        prefix=' ',
+        label_word_num_per_class=1,
+        augmented_num=0,
+        embeddings=None,
+        embedding_path=None,
+    ):
+        
+        super().__init__(
+            tokenizer=tokenizer,
+            classes=classes,
+            num_classes=num_classes,
+            label_words=label_words,
+            post_log_softmax=post_log_softmax,
+            prefix=prefix,
+            label_word_num_per_class=label_word_num_per_class,
+            augmented_num=augmented_num,
+            embeddings=embeddings,
+            embedding_path=embedding_path
+        )
+
+        if augmented_num:
+            self.augmented_num = augmented_num
+            if embedding_path is None:
+                self.embeddings = embeddings
+                self.use_lm_embedding = True
+            else:
+                self.embeddings = api.load(embedding_path)
+                self.use_lm_embedding = False
+        else:
+            self.augmented_num = 0
+
+        self.multi_token_handler = "first"
+
+    def optimize_to_initialize(self):
+        super().optimize_to_initialize()
+
+    def generate_parameters(self):
+        logger.info("Generating parameters for: "+json.dumps(self.label_words))
+
+        logger.info("Automatic verbalizer")
+        logger.info(self.label_words_ids)
+        logger.info(self.label_words)
+              
+        all_ids = []
+        all_weights = []
+        for c in range(self.num_classes):
+            words_per_label = self.label_words[c]
+            ids_per_label = [[i] for i in self.label_words_ids[c]]
+            weights_per_label = [1.0] * len(words_per_label)
+            for word, ids in zip(words_per_label, ids_per_label):
+                
+                if self.use_lm_embedding:
+                    candidate_embeddings = self.embeddings.weight  
+                    base_embedding = self.embeddings(torch.tensor(ids[0]).to(candidate_embeddings.device))
+                    
+                    similarities = F.cosine_similarity(base_embedding[None, :], candidate_embeddings, dim=-1)
+                    values, idx = torch.topk(similarities, self.augmented_num+1)
+                  
+                    values = values[1:]
+                    idx = idx[1:]
+
+                    ids_per_label += [[i] for i in idx]
+                    weights_per_label += [v for v in values]
+
+                    logger.info(f"{word}={ids} choose {self.tokenizer.convert_ids_to_tokens(idx)}")
+                
+                else:
+                    candidates = self.embeddings.most_similar(word.strip('\u0120').strip(), topn=self.augmented_num+10)
+                    neighbors = [x[0] for x in candidates]
+                    similarities = [x[1] for x in candidates]
+
+                    # logger.info(word)
+                    # logger.info(neighbors)
+                    # logger.info(similarities)
+                    # logger.info(self.add_prefix(neighbors, self.prefix))
+                    # logger.info(self.tokenizer.encode(self.add_prefix(neighbors, self.prefix)[0], add_special_tokens=False))
+
+                    idx = [self.tokenizer.encode(w[0].replace('_', ' '), add_special_tokens=False) for w in self.add_prefix(neighbors, self.prefix)]
+                    ids_per_label += idx
+                    weights_per_label += similarities
+
+                    logger.info(f"{word}={ids} choose {neighbors}")
+                
+            
+            all_ids.append(ids_per_label)
+            all_weights.append(weights_per_label)
+        
+        to_show = [[self.tokenizer.decode(j) for j in i] for i in all_ids]
+        logger.info("Verbalizer using: \n"+json.dumps(to_show, indent=4))
+                    
+        max_len  = max([max([len(ids) for ids in ids_per_label]) for ids_per_label in all_ids])
+        max_num_label_words = max([len(ids_per_label) for ids_per_label in all_ids])
+
+        words_ids_mask = [[[1]*len(ids) + [0]*(max_len-len(ids)) for ids in ids_per_label]
+                             + [[0]*max_len]*(max_num_label_words-len(ids_per_label))
+                             for ids_per_label in all_ids]
+        
+        words_ids = [[ids + [0]*(max_len-len(ids)) for ids in ids_per_label]
+                             + [[0]*max_len]*(max_num_label_words-len(ids_per_label))
+                             for ids_per_label in all_ids]
+        
+        weights = [weights_per_label + [0]*(max_num_label_words-len(weights_per_label)) for weights_per_label in all_weights]
+        weights = torch.tensor(weights)
+
+        words_ids_tensor = torch.tensor(words_ids)
+        words_ids_mask = torch.tensor(words_ids_mask)
+        
+        self.label_words_ids = nn.Parameter(words_ids_tensor, requires_grad=False)
+        self.words_ids_mask = nn.Parameter(words_ids_mask, requires_grad=False) # A 3-d mask
+        self.label_words_mask = nn.Parameter(torch.clamp(words_ids_mask.sum(dim=-1), max=1), requires_grad=False)
+        self.label_words_weight = nn.Parameter(weights, requires_grad=True)
+        
+        # logger.info(self.label_words_ids)
+        # logger.info(self.words_ids_mask.shape)
+        # logger.info(self.label_words_mask)
+        # logger.info(self.label_words_weight)
+        # logger.info(weights)
+        
+    def project(self, logits, **kwargs):
+        label_words_logits = logits[:, self.label_words_ids]
+        label_words_logits = self.handle_multi_token(label_words_logits, self.words_ids_mask)
+        label_words_logits = label_words_logits - 10000*(1-self.label_words_mask[None, :, :].to(label_words_logits.device))
+        return label_words_logits
+    
+    def aggregate(self, label_words_logits):
+        device = label_words_logits.device
+        label_words_logits = (label_words_logits * self.label_words_mask.to(device) * self.label_words_weight.to(device)).sum(-1)/(self.label_words_weight.to(device)*self.label_words_mask.to(device)).sum(-1)
+        return label_words_logits
+
 
 class StatisticalVerbalizer(Verbalizer):
 
@@ -356,153 +530,153 @@ class StatisticalVerbalizer(Verbalizer):
         results = - self.loss_fn(samples, prototypes)
         return results/self.temperature
     
-from ddn.pytorch.optimal_transport import sinkhorn, OptimalTransportLayer
+# from ddn.pytorch.optimal_transport import sinkhorn, OptimalTransportLayer
     
-class OptimalTransportVerbalizer(Verbalizer):
+# class OptimalTransportVerbalizer(Verbalizer):
     
-    def __init__(
-        self,         
-        tokenizer: Optional[PreTrainedTokenizer] = None,
-        classes: Optional[Sequence[str]] = None,
-        num_classes: Optional[int] = None,
-        post_log_softmax=True,
-        prefix=' ',
-        ground_dim=-1,
-        init_by_train=True,
-        calibrate=True,
-        embedding_path='',
-        freeze_embeddings=True,
-        underlying_metric='cos'
-        ):
+#     def __init__(
+#         self,         
+#         tokenizer: Optional[PreTrainedTokenizer] = None,
+#         classes: Optional[Sequence[str]] = None,
+#         num_classes: Optional[int] = None,
+#         post_log_softmax=True,
+#         prefix=' ',
+#         ground_dim=-1,
+#         init_by_train=True,
+#         calibrate=True,
+#         embedding_path='',
+#         freeze_embeddings=True,
+#         underlying_metric='cos'
+#         ):
         
-        super().__init__(tokenizer, classes, num_classes)
+#         super().__init__(tokenizer, classes, num_classes)
         
-        self.post_log_sofmax = post_log_softmax
-        self.prefix = prefix
+#         self.post_log_sofmax = post_log_softmax
+#         self.prefix = prefix
         
-        self.freeze_embeddings = freeze_embeddings
-        self.embedding_path = embedding_path
-        self.underlying_metric = underlying_metric
+#         self.freeze_embeddings = freeze_embeddings
+#         self.embedding_path = embedding_path
+#         self.underlying_metric = underlying_metric
                               
-        self.optimal_transport = OptimalTransportLayer()
-        self.calibrate = calibrate
+#         self.optimal_transport = OptimalTransportLayer()
+#         self.calibrate = calibrate
         
-        self.ground_dim = ground_dim
-        self.ground_ids = None
-        self.embeddings = None
+#         self.ground_dim = ground_dim
+#         self.ground_ids = None
+#         self.embeddings = None
         
-        self.ground_prior = None
+#         self.ground_prior = None
         
-        self.labels_buffer = None
-        self.logits_buffer = None
+#         self.labels_buffer = None
+#         self.logits_buffer = None
         
-        self.init_by_train = init_by_train
-        self.initialized = False
+#         self.init_by_train = init_by_train
+#         self.initialized = False
         
-        # self.generate_parameters()
+#         # self.generate_parameters()
         
-    def filter_ground(self, k):
+#     def filter_ground(self, k):
         
-        candidate_logits = self.ground_prior[self.ground_ids]
-        idx = torch.argsort(candidate_logits, descending=True)[:k]
+#         candidate_logits = self.ground_prior[self.ground_ids]
+#         idx = torch.argsort(candidate_logits, descending=True)[:k]
         
-        self.ground_ids = self.ground_ids[idx]
-        self.embeddings = self.embeddings[idx]
+#         self.ground_ids = self.ground_ids[idx]
+#         self.embeddings = self.embeddings[idx]
         
-        self.ground_prior = self.ground_prior[idx]
+#         self.ground_prior = self.ground_prior[idx]
                         
-    def generate_parameters(self):
+#     def generate_parameters(self):
         
-        reader = torch.load(self.embedding_path)
-        self.ground_ids = reader['indices'].cpu()
-        self.embeddings = reader['vectors'].cpu()
+#         reader = torch.load(self.embedding_path)
+#         self.ground_ids = reader['indices'].cpu()
+#         self.embeddings = reader['vectors'].cpu()
         
-        if self.ground_dim<=0:
-            self.ground_dim = len(self.ground_ids)
-        else:
-            self.filter_ground(self.ground_dim)
+#         if self.ground_dim<=0:
+#             self.ground_dim = len(self.ground_ids)
+#         else:
+#             self.filter_ground(self.ground_dim)
             
-        logger.info(f"Ground dimension is {self.ground_dim}")
+#         logger.info(f"Ground dimension is {self.ground_dim}")
     
-        distances = []
-        logger.info("Calculating similarities")
-        if self.underlying_metric=='cos':
-            for i in tqdm(range(self.ground_dim)):
-                distances.append(F.cosine_similarity(self.embeddings.unsqueeze(0), self.embeddings, dim=-1))
-        self.distance = torch.vstack(distances)
+#         distances = []
+#         logger.info("Calculating similarities")
+#         if self.underlying_metric=='cos':
+#             for i in tqdm(range(self.ground_dim)):
+#                 distances.append(F.cosine_similarity(self.embeddings.unsqueeze(0), self.embeddings, dim=-1))
+#         self.distance = torch.vstack(distances)
         
-        self.ground_ids = nn.Parameter(self.ground_ids, requires_grad=False)
-        self.embeddings = nn.Parameter(self.embeddings, requires_grad=not self.freeze_embeddings)
+#         self.ground_ids = nn.Parameter(self.ground_ids, requires_grad=False)
+#         self.embeddings = nn.Parameter(self.embeddings, requires_grad=not self.freeze_embeddings)
         
-        if self.calibrate and (self.ground_prior is not None):
-            self.ground_prior = nn.Parameter(self.ground_prior, requires_grad=False)
-        else:
-            self.ground_prior = nn.Parameter(torch.zeros(len(self.ground_prior)), requires_grad=False)
+#         if self.calibrate and (self.ground_prior is not None):
+#             self.ground_prior = nn.Parameter(self.ground_prior, requires_grad=False)
+#         else:
+#             self.ground_prior = nn.Parameter(torch.zeros(len(self.ground_prior)), requires_grad=False)
             
-        self.init_prototypes()
+#         self.init_prototypes()
         
-    def register_buffers(self, labels, logits):
-        if self.labels_buffer is None:
-            self.labels_buffer = torch.tensor(labels)
-            self.logits_buffer = torch.tensor(logits)
-        else:
-            self.labels_buffer = torch.cat([self.labels_buffer, labels], dim=0)
-            self.logits_buffer = torch.cat([self.logits_buffer, logits], dim=0)
+#     def register_buffers(self, labels, logits):
+#         if self.labels_buffer is None:
+#             self.labels_buffer = torch.tensor(labels)
+#             self.logits_buffer = torch.tensor(logits)
+#         else:
+#             self.labels_buffer = torch.cat([self.labels_buffer, labels], dim=0)
+#             self.logits_buffer = torch.cat([self.logits_buffer, logits], dim=0)
             
-    def init_prototypes(self, labels: torch.Tensor=None, logits: torch.Tensor=None):
+#     def init_prototypes(self, labels: torch.Tensor=None, logits: torch.Tensor=None):
         
-        self.prototypes = torch.zeros(self.num_classes, self.ground_dim)
-        if self.init_by_train:
-            if labels is None:
-                labels = self.labels_buffer
-            if logits is None:
-                logits = self.logits_buffer
+#         self.prototypes = torch.zeros(self.num_classes, self.ground_dim)
+#         if self.init_by_train:
+#             if labels is None:
+#                 labels = self.labels_buffer
+#             if logits is None:
+#                 logits = self.logits_buffer
                 
-            logits = logits[:, self.ground_ids]
+#             logits = logits[:, self.ground_ids]
 
-            for l in range(self.num_classes):
-                class_support = logits[labels==l].to(self.prototypes.data) - self.ground_prior[None, :]
-                self.prototypes.data[l] = class_support.mean(0)
+#             for l in range(self.num_classes):
+#                 class_support = logits[labels==l].to(self.prototypes.data) - self.ground_prior[None, :]
+#                 self.prototypes.data[l] = class_support.mean(0)
                 
-        self.prototypes = nn.Parameter(self.prototypes)
-        self.labels_buffer = None
-        self.logits_buffer = None
-        self.initialized = True
+#         self.prototypes = nn.Parameter(self.prototypes)
+#         self.labels_buffer = None
+#         self.logits_buffer = None
+#         self.initialized = True
         
-    def process_logits(self, logits: torch.Tensor, **kwargs):
-        if self.ground_ids is None:
-            self.register_buffers(kwargs['batch']['label'], logits)
-            return logits
+#     def process_logits(self, logits: torch.Tensor, **kwargs):
+#         if self.ground_ids is None:
+#             self.register_buffers(kwargs['batch']['label'], logits)
+#             return logits
   
-        ground_logits = self.project(logits, **kwargs)
-        if self.post_log_sofmax:
-            ground_probas = self.normalize(ground_logits, **kwargs)
-            ground_logits = torch.log(ground_probas + 1e-20) - self.ground_prior[None, :]
+#         ground_logits = self.project(logits, **kwargs)
+#         if self.post_log_sofmax:
+#             ground_probas = self.normalize(ground_logits, **kwargs)
+#             ground_logits = torch.log(ground_probas + 1e-20) - self.ground_prior[None, :]
         
-        class_logits = self.aggregate(ground_logits, **kwargs)
-        return class_logits
+#         class_logits = self.aggregate(ground_logits, **kwargs)
+#         return class_logits
         
-    def project(self, logits: torch.Tensor, **kwargs) -> torch.Tensor:
-        return logits[:, self.ground_ids]
+#     def project(self, logits: torch.Tensor, **kwargs) -> torch.Tensor:
+#         return logits[:, self.ground_ids]
     
-    def normalize(self, logits: torch.Tensor, **kwargs) -> torch.Tensor:
-        return F.softmax(logits, dim=-1)
+#     def normalize(self, logits: torch.Tensor, **kwargs) -> torch.Tensor:
+#         return F.softmax(logits, dim=-1)
 
-    def aggregate(self, logits: torch.Tensor, **kwargs) -> torch.Tensor:
-        probas = F.softmax(logits, -1)
-        prototypes = F.softmax(self.prototypes, -1)
+#     def aggregate(self, logits: torch.Tensor, **kwargs) -> torch.Tensor:
+#         probas = F.softmax(logits, -1)
+#         prototypes = F.softmax(self.prototypes, -1)
         
-        B, D = probas.shape
-        C, D = prototypes.shape
+#         B, D = probas.shape
+#         C, D = prototypes.shape
         
-        M = self.distance.to(probas)
-        OT_loss = torch.zeros(B, C).to(probas)
-        for c in range(C):
-            for b in range(B):
-                P = (self.optimal_transport(M=M, r=prototypes[[c]], c=probas[[b]]))
-            OT_loss[b, c] = (P*M).sum()
+#         M = self.distance.to(probas)
+#         OT_loss = torch.zeros(B, C).to(probas)
+#         for c in range(C):
+#             for b in range(B):
+#                 P = (self.optimal_transport(M=M, r=prototypes[[c]], c=probas[[b]]))
+#             OT_loss[b, c] = (P*M).sum()
             
-        return - OT_loss
+#         return - OT_loss
 
 logger = get_logger(__name__)
 
@@ -515,10 +689,12 @@ def get_verbalizer_cls_kwargs(verbalizer_type):
         verbalizer_cls = CustomAutomaticVerbalizer
     elif verbalizer_type=='stat':
         verbalizer_cls = StatisticalVerbalizer
-    elif verbalizer_type=='ot':
-        verbalizer_cls = OptimalTransportVerbalizer
+    # elif verbalizer_type=='ot':
+    #     verbalizer_cls = OptimalTransportVerbalizer
     elif verbalizer_type=='aug':
         verbalizer_cls = AugmentedVerbalizer
+    elif verbalizer_type=='augauto':
+        verbalizer_cls=AugmentedAutomaticVerbalizer
     else:
         raise ValueError('Unimplemented verbalizer type')
 

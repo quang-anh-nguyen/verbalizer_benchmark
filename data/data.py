@@ -50,7 +50,7 @@ def get_dataset_processor(
         original_dataset = load_dataset('SetFit/sst5')
     elif 'factiva' in dataset_name:
         version = dataset_name.split('.')[-1]
-        path = os.path.join('factiva', 'storage', version)
+        path = os.path.join('data', 'factiva', 'storage', version)
         from_benchmark = False
         if ('val' in version) or ('test' in version):
             original_dataset = load_dataset('json', data_files={'test': path+'/test.json'}, field='data')
@@ -67,6 +67,16 @@ def get_dataset_processor(
             original_dataset[split] = original_dataset[split].add_column('label', i['label'].tolist())
             
         original_dataset = original_dataset.cast_column('label', ClassLabel(names=['Economie', 'Opinion', 'Politique', 'Societe', 'Culture', 'Sport', 'Environement', 'Technologie', 'Education', 'Justice']))
+    elif "mlsum" in dataset_name:
+        lang = dataset_name.split('.')[-1]
+        from_benchmark = False
+        original_dataset = load_dataset("parquet", data_files={
+                                            "train": f"data/mlsum/{lang}/train.parquet",
+                                            # "valid": f"data/mlsum/{lang}/validation.parquet",
+                                            "test": f"data/mlsum/{lang}/test.parquet"
+                                        })
+
+        original_dataset = original_dataset.class_encode_column("topic")        
     else:
         raise Exception("Dataset processor not implemented yet")
 

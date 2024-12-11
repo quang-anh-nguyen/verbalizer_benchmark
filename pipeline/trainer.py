@@ -223,6 +223,23 @@ class AutomaticVerbalizerTrainer(BaseTrainer):
     def __init__(self, model=None, args=None, datasets=None, prompter=None, **kwargs):
         super().__init__(model, args, datasets, prompter, callbacks=[AutomaticVerbalizerCallback()], **kwargs)
 
+class AugmentedAutomaticVerbalizerCallback(TrainerCallback):
+
+    def on_epoch_end(self, args, state, control, **kwargs):
+        
+        verbalizer = kwargs['model'].verbalizer
+        if not hasattr(verbalizer, "label_words_ids"):
+            
+            logger.info(f"Callback for optimize_to_initialize with search_id={kwargs['model'].verbalizer.search_id}")
+            with torch.no_grad():
+                verbalizer.optimize_to_initialize()
+                verbalizer.generate_parameters()
+
+class AugmentedAutomaticVerbalizerTrainer(BaseTrainer):
+
+    def __init__(self, model=None, args=None, datasets=None, prompter=None, **kwargs):
+        super().__init__(model, args, datasets, prompter, callbacks=[AugmentedAutomaticVerbalizerCallback()], **kwargs)
+
 
 class StatisticalVerbalizerCallback(TrainerCallback):
 
@@ -307,6 +324,8 @@ def get_trainer_cls_kwargs(args):
         trainer_cls = OptimalTransportTrainer
     elif args.verbalizer_type=='aug':
         trainer_cls = BaseTrainer
+    elif args.verbalizer_type=='augauto':
+        trainer_cls = AugmentedAutomaticVerbalizerTrainer
     else:
         trainer_cls = BaseTrainer
 
