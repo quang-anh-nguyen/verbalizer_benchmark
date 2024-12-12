@@ -1,0 +1,229 @@
+{
+    "ag_news": {
+        "prompt": [
+            "[INST]You are a topic labelling assistant. Given the following text:\n{text}\nWhich topic is this text about?[/INST]",
+            "[INST]You are a topic labelling assistant. Given the following text:\n{text}\nWhich topic is this text about among:\nworld\nsports\nbusiness\nscience/technology?[/INST]",
+            {
+                "instruction": "[INST]You are a topic labeling assistant. Given a text, you need to answer which topic is this text about.\n\n",
+                "demonstration": "Here are some examples:\n\n",
+                "example": "Text: {text}\nLabel: {label}\n\n",
+                "question": "Which topic is this text about among:\nworld\nsports\nbusiness\nscience/technology?\n\nText: {text}\nLabel: [/INST]"
+            }
+        ],
+        "fields": ["text"],
+        "output": "label",
+        "regex": [
+            "[a-zA-Z0-9 ]*(world|sports|business|science|technology)[a-zA-Z0-9 ]*",
+            "[a-zA-Z0-9 !\"#$%&'()*+, -./:;<=>?@[\\]^_`{|}~]*(world|sports|business|science|technology)[a-zA-Z0-9 !\"#$%&'()*+, -./:;<=>?@[\\]^_`{|}~]*"
+        ],
+        "label_words": [
+            [
+                ["world"],
+                ["sports"],
+                ["business"],
+                ["science", "technology"]
+            ]
+        ]
+    },
+    "yahoo_answers_topics": {
+        "prompt": [
+            "[INST]You are a topic labelling assistant.\n{question_title} {question_content}\nWhich topic is this question about?[/INST]",
+            "[INST]You are a topic labelling assistant.\n{question_title} {question_content}\nWhich topic is this question about?[/INST] among:\nsociety & culture\nscience & mathematics\nhealth\neducation & reference\ncomputers & internet\nsports\nbusiness & finance\nentertainment & music\nfamily & relationships\npolitics & government\n[/INST]",
+            {
+                "instruction": "[INST]You are a topic labeling assistant. Given a question, you need to answer which topic is this question about.\n",
+                "demonstration": "Here are some examples:\n",
+                "example": "Text: {question_title} {question_content}\nLabel: {topic}\n\n",
+                "question": "Which topic is this question about among:\nsociety & culture\nscience & mathematics\nhealth\neducation & reference\ncomputers & internet\nsports\nbusiness & finance\nentertainment & music\nfamily & relationships\npolitics & government?\n\nText: {question_title} {question_content}\nLabel: [/INST]"
+            }
+        ],
+        "fields": ["question_title", "question_content"],
+        "output": "topic",
+        "regex": [
+            "[a-zA-Z0-9 ]*(society|culture|science|mathematics|health|education|reference|computers|internet|sports|business|finance|entertainment|music|family|relationships|politics|government)[a-zA-Z0-9 ]*",
+            "[a-zA-Z0-9 !\"#$%&'()*+, -./:;<=>?@[\\]^_`{|}~]*(society|culture|science|mathematics|health|education|reference|computers|internet|sports|business|finance|entertainment|music|family|relationships|politics|government)[a-zA-Z0-9 !\"#$%&'()*+, -./:;<=>?@[\\]^_`{|}~]*"
+        ],
+        "label_words": [
+            [
+                ["society", "culture"],
+                ["science", "mathematics"],
+                ["health"],
+                ["education", "reference"],
+                ["computers", "internet"],
+                ["sports"],
+                ["business", "finance"],
+                ["entertainment", "music"],
+                ["family", "relationships"],
+                ["politics", "government"]
+            ]
+        ]
+    }, 
+    "surveillance": {
+        "prompt":"[INST]Tu es un assistant de reconnaissance de thématiques. Lire le texte suivant:\n{title} {body}\nEst-ce ce texte parle de la thématique {theme}?[/INST]",
+        "fields": ["title", "body"],
+        "regex": null
+    },
+    "dbpedia_14": {
+        "prompt": [
+            "[INST]You are a text category annotator. Given the following text:\n{title}\n{content}\nWhich category does this text belong to?[/INST]",
+            "[INST]You are a text category annotator. Given the following text:\n{title}\n{content}\nGiven a list of categories: \ncompany, \neducational institution, \nartist, \nathlete, \noffice holder, \nmean of transportation, \nbuilding, \nnatural place, \nvillage, \nanimal, \nplant, \nalbum, \nfilm, \nwritten work. \nWhich category does this text belong to?[/INST]",
+            {
+                "instruction": "[INST]You are a categorizing assistant. Given a title and a description, you need to determine which category does the title belong to.\n",
+                "demonstration": "Here are some examples:\n",
+                "example": "Title: {title}\nDescription: {content}\nLabel: {label}\n\n",
+                "question": "Which category does this belong to among: \ncompany, \neducational institution, \nartist, \nathlete, \noffice holder, \nmean of transportation, \nbuilding, \nnatural place, \nvillage, \nanimal, \nplant, \nalbum, \nfilm, \nwritten work\n?\n\nTitle: {title}\nDescription: {content}\nLabel: [/INST]"
+            }
+        ],
+        "fields": ["title", "content"],
+        "output": "label",
+        "regex": [
+            "[a-zA-Z0-9 ]*(company|educational institution|artist|athlete|office holder|mean of transportation|building|natural place|village|animal|plant|album|film|written Work)[a-zA-Z0-9 ]*",
+            "[a-zA-Z0-9 !\"#$%&'()*+, -./:;<=>?@[\\]^_`{|}~]*(company|educational institution|artist|athlete|office holder|mean of transportation|building|natural place|village|animal|plant|album|film|written Work)[a-zA-Z0-9 !\"#$%&'()*+, -./:;<=>?@[\\]^_`{|}~]*"
+        ],
+        "label_words": [
+            [
+                ["company"], 
+                ["educational institution"], 
+                ["artist"], 
+                ["athlete"], 
+                ["office holder"], 
+                ["mean of transportation"], 
+                ["building"], 
+                ["natural place"], 
+                ["village"], 
+                ["animal"], 
+                ["plant"], 
+                ["album"], 
+                ["film"], 
+                ["written work"]
+            ]
+        ]
+    },
+    "mlsum.fr": {
+        "prompt": [
+            "[INST]Tu es un assistant de classification de thème. Lire le texte suivant\n{title}\n{summary}\nCe texte parle de quel thème?[/INST]",
+            "[INST]Tu es un assistant de classification de thème. Lire le texte suivant\n{title}\n{summary}\nCe texte parle de quel thème parmi: \néconomie, \nopinion, \npolitique, \nsociété, \nculture, \nsport, \nenvironnement, \ntechnologie, \néducation, \njustice \n?[/INST]",
+            {
+                "instruction": "[INST]Tu es un assistant de classification de thème. Basé sur un titre et un texte, tu dois prédire le thème dont ce texte parle.\n",
+                "demonstration": "Voici quelques exemples:\n",
+                "example": "Titre: {title}\nTexte: {summary}\nThème: {label}\n\n",
+                "question": "Ce texte parle de quel thème parmi: \néconomie, \nopinion, \npolitique, \nsociété, \nculture, \nsport, \nenvironnement, \ntechnologie, \néducation, \njustice\n? \nTitre: {title}\nTexte: {summary}\nThème: [/INST]"
+            }
+        ],
+        "fields": ["title", "summary", "text"],
+        "output": "label",
+        "regex": [
+            "[a-zA-Z0-9 ]*(économie|opinion|politique|société|culture|sport|environnement|technologie|éducation|justice)[a-zA-Z0-9 ]*",
+            "[a-zA-Z0-9 !\"#$%&'()*+, -./:;<=>?@[\\]^_`{|}~]*(économie|opinion|politique|société|culture|sport|environnement|technologie|éducation|justice)[a-zA-Z0-9 !\"#$%&'()*+, -./:;<=>?@[\\]^_`{|}~]*"
+        ],
+        "label_words": [
+            [
+                ["économie"], 
+                ["opinion"], 
+                ["politique"], 
+                ["société"], 
+                ["culture"], 
+                ["sport"], 
+                ["environnement"], 
+                ["technologie"], 
+                ["éducation"], 
+                ["justice"]
+            ]
+        ]
+    },
+    "mlsum.de": {
+        "prompt": [
+            "[INST]Du bist ein Themenklassifizierungsassistent. Lies den folgenden Text\n{title}\n{summary}\nUm welches Thema handelt es sich in diesem Text?[/INST]",
+            "[INST]Du bist ein Themenklassifizierungsassistent. Lies den folgenden Text\n{title}\n{summary}\nUm welches Thema handelt es sich in diesem Text? Wähle aus: \nAuto, \nBildung, \nDigital, \nGeld, \nKarriere, \nMuenchen, \nPanorama, \nPolitik, \nReise, \nSport, \nStil, \nWirtschaft[/INST]",
+            {
+                "instruction": "[INST]Du bist ein Themenklassifizierungsassistent. Basierend auf einem Titel und einem Text musst du das Thema vorhersagen, über das dieser Text spricht.\n",
+                "demonstration": "Hier sind einige Beispiele:\n",
+                "example": "Titel: {title}\nText: {summary}\nThema: {label}\n\n",
+                "question": "Um welches Thema handelt es sich in diesem Text? Wähle aus: \nAuto, \nBildung, \nDigital, \nGeld, \nKarriere, \nMuenchen, \nPanorama, \nPolitik, \nReise, \nSport, \nStil, \nWirtschaft\n? \nTitel: {title}\nText: {summary}\nThema: [/INST]"
+            }
+            
+        ],
+        "fields": ["title", "summary", "text"],
+        "output": "topic",
+        "regex": [
+            "[a-zA-Z0-9 ]*(Auto|Bildung|Digital|Geld|Karriere|Muenchen|Panorama|Politik|Reise|Sport|Stil|Wirtschaft)[a-zA-Z0-9 ]*",
+            "[a-zA-Z0-9 !\"#$%&'()*+, -./:;<=>?@[\\]^_`{|}~]*(Auto|Bildung|Digital|Geld|Karriere|Muenchen|Panorama|Politik|Reise|Sport|Stil|Wirtschaft)[a-zA-Z0-9 !\"#$%&'()*+, -./:;<=>?@[\\]^_`{|}~]*"
+        ],
+        "label_words": [
+            [
+                ["Auto"], 
+                ["Bildung"], 
+                ["Digital"], 
+                ["Geld"], 
+                ["Karriere"], 
+                ["Muenchen"], 
+                ["Panorama"], 
+                ["Politik"], 
+                ["Reise"], 
+                ["Sport"], 
+                ["Stil"], 
+                ["Wirtschaft"]
+            ]
+        ]
+    },
+    "mlsum.es": {
+        "prompt": [
+            "[INST]Eres un asistente de clasificación de temas. Lee el siguiente texto\n{title}\n{summary}\n¿De qué tema trata este texto?[/INST]",
+            "[INST]Eres un asistente de clasificación de temas. Lee el siguiente texto\n{title}\n{summary}\n¿De qué tema trata este texto? Elige entre: \ncultura, \ndeportes, \neconomia, \ninternacional, \npolitica, \nsociedad, \ntecnologia[/INST]",
+            {
+                "instruction": "[INST]Eres un asistente de clasificación de temas. Basado en un título y un texto, debes predecir el tema del que trata este texto.\n",
+                "demonstration": "Aquí tienes algunos ejemplos:\n",
+                "example": "Título: {title}\nTexto: {summary}\nTema: {label}\n\n",
+                "question": "¿De qué tema trata este texto? Elige entre: \ncultura, \ndeportes, \neconomia, \ninternacional, \npolitica, \nsociedad, \ntecnologia\n? \nTítulo: {title}\nTexto: {summary}\nTema: [/INST]"
+            }  
+        ],
+        "fields": ["title", "summary", "text"],
+        "output": "topic",
+        "regex": [
+            "[a-zA-Z0-9 ]*(cultura|deportes|economia|internacional|politica|sociedad|tecnologia)[a-zA-Z0-9 ]*",
+            "[a-zA-Z0-9 !\"#$%&'()*+, -./:;<=>?@[\\]^_`{|}~]*(cultura|deportes|economia|internacional|politica|sociedad|tecnologia)[a-zA-Z0-9 !\"#$%&'()*+, -./:;<=>?@[\\]^_`{|}~]*"
+        ],
+        "label_words": [
+            [
+                ["cultura"], 
+                ["deportes"], 
+                ["economia"], 
+                ["internacional"], 
+                ["politica"], 
+                ["sociedad"], 
+                ["tecnologia"]
+            ]
+        ]
+    },
+    "factiva": {
+        "prompt": [
+            "[INST]Tu es un assistant de classification de secteur des articles de presse. Lire le texte suivant\n{title}\n{snippet}\nCe texte appartient à quel secteur?[/INST]",
+            "[INST]Tu es un assistant de classification de secteur des articles de presse. Lire le texte suivant\n{title}\n{snippet}\nCe texte appartient à quel secteur parmi: \naéronautique, \narmement, \nagroalimentaire, \nautomobile, \ndistribution - commerce, \nélectricité, \nfinance, \npétrole - gaz, \npromotion immobilière, \ntourisme - hôtellerie - restauration, \n transport \n?[/INST]",
+            {
+                "instruction": "[INST]Tu es un assistant de classification de secteur des articles de presse. Basé sur un titre et un texte, tu dois prédire le secteur auquel ce texte appartient.\n",
+                "demonstration": "Voici quelques exemples:\n",
+                "example": "Titre: {title}\nTexte: {snippet}\nSecteur: {sector}\n\n",
+                "question": "Ce texte appartient à quel secteur parmi: \naéronautique, \narmement, \nagroalimentaire, \nautomobile, \ndistribution - commerce, \nélectricité, \nfinance, \npétrole - gaz, \npromotion immobilière, \ntourisme - hôtellerie - restauration, \n transport \n? \nTitre: {title}\nTexte: {snippet}\nSecteur: [/INST]"
+            }
+        ],
+        "fields": ["title", "snippet"],
+        "output": "sector",
+        "regex": [
+            "[a-zA-Z0-9 ]*(aéronautique|armement|agroalimentaire|automobile|distribution|commerce|électricité|finance|pétrole|gaz|promotion immobilière|tourisme|hôtellerie|restauration|transport)[a-zA-Z0-9 ]*",
+            "[a-zA-Z0-9 !\"#$%&'()*+, -./:;<=>?@[\\]^_`{|}~]*(aéronautique|armement|agroalimentaire|automobile|distribution|commerce|électricité|finance|pétrole|gaz|promotion immobilière|tourisme|hôtellerie|restauration|transport)[a-zA-Z0-9 !\"#$%&'()*+, -./:;<=>?@[\\]^_`{|}~]*"
+        ],
+        "label_words": [
+            [
+                ["aéronautique"], 
+                ["armement"], 
+                ["agroalimentaire"], 
+                ["distribution", "commerce"], 
+                ["électricité"], 
+                ["finance"], 
+                ["pétrole", "gaz"], 
+                ["promotion immobilière"], 
+                ["tourisme", "hôtellerie", "restauration"], 
+                ["transport"]
+            ]
+        ]
+    }
+}
